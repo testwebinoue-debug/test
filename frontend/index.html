@@ -1,0 +1,60 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>入力アプリ</title>
+<script>
+async function loadData(){
+    let itemsA = await (await fetch('/api/items_a')).json();
+    let itemsD = await (await fetch('/api/items_d')).json();
+    let selA = document.getElementById('itemA');
+    itemsA.forEach(a => {
+        let opt = document.createElement('option');
+        opt.value=a.id;
+        opt.text=a.name;
+        selA.add(opt);
+    });
+    let container = document.getElementById('inputs');
+    itemsD.forEach(d => {
+        let label = document.createElement('label');
+        label.innerText = d.label;
+        let input = document.createElement('input');
+        input.id='d_'+d.id;
+        input.type = d.type=='number'?'number':(d.type=='date'?'date':'text');
+        container.appendChild(label);
+        container.appendChild(input);
+        container.appendChild(document.createElement('br'));
+    });
+}
+
+async function save(){
+    let itemA_id = document.getElementById('itemA').value;
+    let inputs = [];
+    document.querySelectorAll('#inputs input').forEach(inp=>{
+        inputs.push({id:inp.id,value:inp.value});
+    });
+    await fetch('/api/input/save',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({item_a_id:itemA_id,inputs:inputs,created_at:new Date()})
+    });
+    alert('入力を保存しました');
+}
+
+async function downloadPDF(){
+    let itemA_id = document.getElementById('itemA').value;
+    window.location='/api/pdf/generate/'+itemA_id;
+}
+
+window.onload = loadData;
+</script>
+</head>
+<body>
+<h1>入力アプリ</h1>
+<select id="itemA"></select><br><br>
+<div id="inputs"></div><br>
+<button onclick="save()">保存</button>
+<button onclick="downloadPDF()">PDFダウンロード</button>
+</body>
+</html>

@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>入力アプリ</title>
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    max-width: 600px;
+    width: 100%;
+    padding: 40px;
+}
+
+h1 {
+    color: #333;
+    margin-bottom: 30px;
+    text-align: center;
+    font-size: 28px;
+}
+
+.screen {
+    display: none;
+}
+
+.screen.active {
+    display: block;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+label {
+    display: block;
+    color: #555;
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+select, input[type="text"], input[type="number"], input[type="date"] {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e1e8ed;
+    border-radius: 8px;
+    font-size: 15px;
+    transition: all 0.3s;
+}
+
+select:focus, input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+}
+
+.required::after {
+    content: " *";
+    color: #e74c3c;
+}
+
+.button-group {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+button {
+    flex: 1;
+    padding: 14px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102,126,234,0.4);
+}
+
+.btn-secondary {
+    background: #e1e8ed;
+    color: #555;
+}
+
+.btn-secondary:hover {
+    background: #d1d8dd;
+}
+
+.btn-success {
+    background: #27ae60;
+    color: white;
+}
+
+.btn-success:hover {
+    background: #229954;
+    transform: translateY(-2px);
+}
+
+.confirmation {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.confirmation h3 {
+    color: #333;
+    margin-bottom: 15px;
+    font-size: 18px;
+}
+
+.confirmation-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #e1e8ed;
+}
+
+.confirmation-item:last-child {
+    border-bottom: none;
+}
+
+.confirmation-label {
+    color: #666;
+    font-weight: 600;
+}
+
+.confirmation-value {
+    color: #333;
+}
+
+.error {
+    background: #fee;
+    color: #c33;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border-left: 4px solid #c33;
+}
+
+.success {
+    background: #efe;
+    color: #3c3;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border-left: 4px solid #3c3;
+}
+
+.admin-link {
+    text-align: center;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e1e8ed;
+}
+
+.admin-link a {
+    color: #667eea;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.admin-link a:hover {
+    text-decoration: underline;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1 id="pageTitle">入力アプリ</h1>
+    
+    <div id="errorMessage"></div>
+    
+    <!-- 項目選択画面 -->
+    <div id="selectScreen" class="screen active">
+        <div class="form-group">
+            <label for="itemA">担当項目を選択してください</label>
+            <select id="itemA">
+                <option value="">選択してください</option>
+            </select>
+        </div>
+        
+        <div class="button-group">
+            <button class="btn-primary" onclick="goToInput()">OK</button>
+        </div>
+    </div>
+    
+    <!-- 入力画面 -->
+    <div id="inputScreen" class="screen">
+        <div id="inputFields"></div>
+        
+        <div class="button-group">
+            <button class="btn-secondary" onclick="goBack()">戻る</button>
+            <button class="btn-primary" onclick="confirmInput()">確認</button>
+        </div>
+    </div>
+    
+    <!-- 確認画面 -->
+    <div id="confirmScreen" class="screen">
+        <div class="confirmation">
+            <h3>入力内容の確認</h3>
+            <div id="confirmationContent"></div>
+        </div>
+        
+        <div class="button-group">
+            <button class="btn-secondary" onclick="goToInput()">修正</button>
+            <button class="btn-primary" onclick="saveAndGeneratePDF()">OK（PDF生成）</button>
+        </div>
+    </div>
+    
+    <!-- PDF確認画面 -->
+    <div id="pdfScreen" class="screen">
+        <div class="success">
+            PDFが生成されました。内容を確認してダウンロードしてください。
+        </div>
+        
+        <div class="button-group">
+            <button class="btn-secondary" onclick="startOver()">最初に戻る</button>
+            <button class="btn-success" onclick="downloadPDF()">ダウンロード</button>
+        </div>
+    </div>
+    
+    <div class="admin-link">
+        <a href="/admin">管理者ログイン</a> | <a href="/sub-admin">サブ管理者ログイン</a>
+    </div>
+</div>
+
+<script>
+let structure = null;
+let currentItemA = null;
+let savedInputId = null;
+
+async function init() {
+    try {
+        const response = await fetch('/api/structure');
+        structure = await response.json();
+        
+        document.getElementById('pageTitle').textContent = structure.sheet_name || '入力アプリ';
+        
+        const select = document.getElementById('itemA');
+        structure.items_a.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item.id;
+            option.textContent = item.name;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        showError('データの読み込みに失敗しました: ' + error.message);
+    }
+}
+
+function showScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+}
+
+function showError(message) {
+    const errorDiv = document.getElementById('errorMessage');
+    errorDiv.innerHTML = `<div class="error">${message}</div>`;
+    setTimeout(() => errorDiv.innerHTML = '', 5000);
+}
+
+function showSuccess(message) {
+    const errorDiv = document.getElementById('errorMessage');
+    errorDiv.innerHTML = `<div class="success">${message}</div>`;
+    setTimeout(() => errorDiv.innerHTML = '', 5000);
+}
+
+function goToInput() {
+    const select = document.getElementById('itemA');
+    currentItemA = select.value;
+    
+    if (!currentItemA) {
+        showError('項目を選択してください');
+        return;
+    }
+    
+    const container = document.getElementById('inputFields');
+    container.innerHTML = '';
+    
+    structure.items_d.forEach(item => {
+        const formGroup = document.createElement('div');
+        formGroup.className = 'form-group';
+        
+        const label = document.createElement('label');
+        label.textContent = item.label;
+        label.htmlFor = `d_${item.id}`;
+        if (item.required) {
+            label.className = 'required';
+        }
+        
+        const input = document.createElement('input');
+        input.id = `d_${item.id}`;
+        input.name = item.id;
+        
+        if (item.type === 'number') {
+            input.type = 'number';
+            input.step = 'any';
+        } else if (item.type === 'date') {
+            input.type = 'date';
+        } else {
+            input.type = 'text';
+        }
+        
+        if (item.required) {
+            input.required = true;
+        }
+        
+        formGroup.appendChild(label);
+        formGroup.appendChild(input);
+        container.appendChild(formGroup);
+    });
+    
+    showScreen('inputScreen');
+}
+
+function goBack() {
+    showScreen('selectScreen');
+}
+
+function confirmInput() {
+    const inputs = [];
+    let hasError = false;
+    
+    structure.items_d.forEach(item => {
+        const input = document.getElementById(`d_${item.id}`);
+        const value = input.value.trim();
+        
+        if (item.required && !value) {
+            showError(`${item.label}は必須項目です`);
+            hasError = true;
+            return;
+        }
+        
+        inputs.push({
+            id: `d_${item.id}`,
+            label: item.label,
+            value: value
+        });
+    });
+    
+    if (hasError) return;
+    
+    const confirmContent = document.getElementById('confirmationContent');
+    confirmContent.innerHTML = '';
+    
+    const itemA = structure.items_a.find(i => i.id === currentItemA);
+    
+    const itemDiv = document.createElement('div');
+    itemDiv.className = 'confirmation-item';
+    itemDiv.innerHTML = `
+        <span class="confirmation-label">担当項目:</span>
+        <span class="confirmation-value">${itemA.name}</span>
+    `;
+    confirmContent.appendChild(itemDiv);
+    
+    inputs.forEach(inp => {
+        const div = document.createElement('div');
+        div.className = 'confirmation-item';
+        div.innerHTML = `
+            <span class="confirmation-label">${inp.label}:</span>
+            <span class="confirmation-value">${inp.value || '（未入力）'}</span>
+        `;
+        confirmContent.appendChild(div);
+    });
+    
+    showScreen('confirmScreen');
+}
+
+async function saveAndGeneratePDF() {
+    try {
+        const inputs = [];
+        structure.items_d.forEach(item => {
+            const input = document.getElementById(`d_${item.id}`);
+            inputs.push({
+                id: `d_${item.id}`,
+                value: input.value
+            });
+        });
+        
+        const response = await fetch('/api/input/save', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                item_a_id: currentItemA,
+                inputs: inputs
+            })
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || '保存に失敗しました');
+        }
+        
+        const result = await response.json();
+        savedInputId = result.input_id;
+        
+        showScreen('pdfScreen');
+    } catch (error) {
+        showError(error.message);
+    }
+}
+
+function downloadPDF() {
+    window.location.href = `/api/pdf/generate/${currentItemA}`;
+    setTimeout(() => showSuccess('ダウンロードが完了しました'), 1000);
+}
+
+function startOver() {
+    currentItemA = null;
+    savedInputId = null;
+    document.getElementById('itemA').value = '';
+    document.querySelectorAll('#inputFields input').forEach(inp => inp.value = '');
+    showScreen('selectScreen');
+}
+
+window.onload = init;
+</script>
+
+</body>
+</html>
